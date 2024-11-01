@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="keywords" content="Comma-separated keywords">
+  <meta name="description" content="Brief description">
+  <meta name="author" content="You">
+  <title>Let's WRITE POSitive</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='flexboxgrid.min.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='jquery-3.4.1.min.js') }}" charset="utf-8"></script>
+</head>
+<body>
+
+  <div class="container">
+
+  <!-- LOGO start -->
+  <div class="row logo">
+    <img src="{{ url_for('static', filename='positive.png') }}">
+  </div>
+  <!-- LOGO end -->
+
+
+  <!-- CONTENT start -->
+  <div class="row content">
+
+    <!-- LEFT COL (INPUT) -->
+    <div class="col-xs-12 col-sm-6">
+      <form>
+        <textarea id = 'user_input' placeholder="Type Your Text Here..."></textarea><br>
+      </form>
+    </div>
+
+    <!-- RIGHT COL (ANALYSIS) -->
+    <div class="col-xs-12 col-sm-6">
+      <div class="scores-headline">Your Text Scores:</div>
+
+      <div class="scores scores-red">
+        <div class="scores-value" id="scores_neg">
+          0.00
+        </div>
+
+        <div class="scores-label">
+          N<br>
+          egativity
+        </div>
+      </div>
+
+      <div class="scores scores-green">
+        <div class="scores-value" id="scores_pos">
+          0.00
+        </div>
+
+        <div class="scores-label">
+          P<br>
+          ositivity
+        </div>
+      </div>
+
+      <div class="scores scores-gray">
+        <div class="scores-value" id="scores_neu">
+          0.00
+        </div>
+
+        <div class="scores-label">
+          N<br>
+          eutrality
+        </div>
+      </div>
+
+    </div>
+
+    <!-- stripe -->
+    <hr>
+
+  </div>
+  <!-- CONTENT end -->
+
+  </div>
+
+  <script type="text/javascript">
+
+  // Reset scores when the textarea is empty
+
+  $(document).ready(function() {
+    $('#user_input').on('keyup', function() {
+      var key = event.keyCode || event.charCode;
+
+      if ( key == 8 ) {
+        if ($('#user_input').val().length == 0) {
+          $('#scores_neg').text("0.0");
+          $('#scores_pos').text("0.0");
+          $('#scores_neu').text("0.0");
+        }
+      }
+    });
+  });
+
+
+  // Send text to python and insert processed data into the website
+
+  $(document).ready(function() {
+
+    // Check user input on every keypress
+    $( "#user_input" ).keypress(function( event ) {
+
+    // Event listener for ['.', '?', '!'] = [46, 63, 33]
+    // event.which holds the keycode (46 for . etc)
+      if ( [46, 63, 33].indexOf(event.which) >= 0  ) {
+
+        // Get the content from the textarea
+        var text = $('#user_input').val();
+        // Append the string of the current key ('.', '?', '!')
+        text += String.fromCharCode(event.which);
+
+        // Submit text to /process
+          $.ajax({
+             data : {
+                user_input : text
+                    },
+                type : 'POST',
+                url : '/process'
+               })
+           .done(function(data) {
+             // data holds the data returned from processing
+             // Insert processed data (via id) into the html code
+             $('#user_input').val(data.output);
+             $('#scores_neg').text(data.neg);
+             $('#scores_pos').text(data.pos);
+             $('#scores_neu').text(data.neu);
+           });
+         }
+      })
+  })
+
+
+  // Clear input field and reset values on inactivity for x seconds
+
+    var idleTime = 0;
+    var maxIdleTime = 30; // clear after 30 seconds
+    $(document).ready(function () {
+        // Increment the idle time counter every minute.
+        var idleInterval = setInterval(timerIncrement, 1000); // 1 second
+
+        // Zero the idle timer on mouse movement.
+        $(this).mousemove(function (e) {
+            idleTime = 0;
+        });
+        $(this).keypress(function (e) {
+            idleTime = 0;
+        });
+    });
+
+    function timerIncrement() {
+        idleTime = idleTime + 1;
+        if (idleTime >= maxIdleTime) {
+          $('#user_input').val('');
+          $('#scores_neg').text("0.0");
+          $('#scores_pos').text("0.0");
+          $('#scores_neu').text("0.0");
+        }
+    }
+
+
+  </script>
+</body>
+</html>
